@@ -58,6 +58,7 @@ function qualityLabel(q) {
 
 function VideoTile({ participant, isLocal, type = "camera" }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const [isMuted, setIsMuted] = useState(false);
   const [hasVideo, setHasVideo] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -110,6 +111,17 @@ function VideoTile({ participant, isLocal, type = "camera" }) {
     };
   }, [participant, hasVideo, type]);
 
+  useEffect(() => {
+    if (isLocal || type === "screen") return;
+    const pub = participant.getTrackPublication(Track.Source.Microphone);
+    if (pub && pub.track && audioRef.current) {
+      pub.track.attach(audioRef.current);
+    }
+    return () => {
+      if (pub && pub.track) pub.track.detach();
+    };
+  }, [participant, isLocal, type, isMuted]);
+
   const displayName = participant.name || participant.identity || "Guest";
 
   return (
@@ -124,6 +136,9 @@ function VideoTile({ participant, isLocal, type = "camera" }) {
         />
       ) : (
         <div className="video-tile-avatar">{getInitials(displayName)}</div>
+      )}
+      {!isLocal && type !== "screen" && (
+        <audio ref={audioRef} autoPlay />
       )}
       <div className="video-tile-name">
         {displayName}
@@ -238,8 +253,13 @@ export default function RoomPage() {
     const room = roomRef.current;
     if (!room) return;
     const next = !screenSharing;
-    await room.localParticipant.setScreenShareEnabled(next);
-    setScreenSharing(next);
+    try {
+      await room.localParticipant.setScreenShareEnabled(next);
+      setScreenSharing(next);
+    } catch (err) {
+      console.error("Screen share error:", err);
+      alert("Screen sharing is not supported on this device/browser (e.g., mobile devices).");
+    }
   }
 
   function leaveCall() {
