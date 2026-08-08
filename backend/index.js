@@ -5,8 +5,9 @@ import { serve } from '@hono/node-server'
 const app = new Hono()
 
 app.get('/', (c) => c.text('LiveKit Token Server is running!'))
+app.get('/api/backend', (c) => c.text('LiveKit Token Server is running!'))
 
-app.get('/api/token', async (c) => {
+const tokenHandler = async (c) => {
   const room = c.req.query('room')
   const identity = c.req.query('identity')
 
@@ -27,7 +28,10 @@ app.get('/api/token', async (c) => {
   return c.json({ token }, 200, {
     'Access-Control-Allow-Origin': '*'
   })
-})
+}
+
+app.get('/api/token', tokenHandler)
+app.get('/api/backend/api/token', tokenHandler)
 
 const port = Number(process.env.PORT) || 3001
 
