@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { AccessToken } from 'livekit-server-sdk'
+import { serve } from '@hono/node-server'
 
 const app = new Hono()
 
@@ -28,7 +29,9 @@ app.get('/api/token', async (c) => {
   })
 })
 
-export default {
-  port: 3001,
+const port = Number(process.env.PORT) || 3001
+
+serve({
   fetch: app.fetch,
-}
+  port
+})
